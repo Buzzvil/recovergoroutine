@@ -103,25 +103,40 @@ func isRecover(callExpr *ast.CallExpr) bool {
 
 func isCustomRecover(callExpr *ast.CallExpr) bool {
 	result := false
-	if ident, ok := callExpr.Fun.(*ast.Ident); ok {
-		if ident.Obj == nil {
+	if selectorExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+		if selectorExpr.Sel == nil {
 			return true
 		}
 
-		funcDecl, ok := ident.Obj.Decl.(*ast.FuncDecl)
-		if !ok {
-			return true
-		}
-
-		ast.Inspect(funcDecl, func(node ast.Node) bool {
-			if callExpr, ok := node.(*ast.CallExpr); ok && isRecover(callExpr) {
-				result = true
-				return false
-			}
-
-			return true
-		})
+		result = checkIdent(selectorExpr.Sel)
 	}
+
+	if ident, ok := callExpr.Fun.(*ast.Ident); ok {
+		result = checkIdent(ident)
+	}
+
+	return result
+}
+
+func checkIdent(ident *ast.Ident) bool {
+	result := false
+	if ident.Obj == nil {
+		return true
+	}
+
+	funcDecl, ok := ident.Obj.Decl.(*ast.FuncDecl)
+	if !ok {
+		return true
+	}
+
+	ast.Inspect(funcDecl, func(node ast.Node) bool {
+		if callExpr, ok := node.(*ast.CallExpr); ok && isRecover(callExpr) {
+			result = true
+			return false
+		}
+
+		return true
+	})
 
 	return result
 }
