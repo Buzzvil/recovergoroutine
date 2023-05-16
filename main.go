@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	singlechecker.Main(recovergoroutine.Analyzer)
+	singlechecker.Main(recovergoroutine.NewAnalyzer())
 }

@@ -5,14 +5,19 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/types"
+	"reflect"
 
 	"golang.org/x/tools/go/analysis"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name: "recovergoroutine",
-	Doc:  "finds goroutine code without recover",
-	Run:  run,
+func NewAnalyzer() *analysis.Analyzer {
+	analyzer := &analysis.Analyzer{
+		Name: "recovergoroutine",
+		Doc:  "finds goroutine code without recover",
+		Run:  run,
+	}
+
+	return analyzer
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
@@ -50,48 +55,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) (bool, error) {
 	fn := goStmt.Call
-	result := false
 	switch fun := fn.Fun.(type) {
 	case *ast.SelectorExpr:
-		ident, ok := fun.X.(*ast.Ident)
-		if !ok {
-			return false, nil
-		}
-
-		methodName := fun.Sel.Name
-		objType := pass.TypesInfo.ObjectOf(ident)
-		pointerType, ok := objType.Type().(*types.Pointer)
-		if !ok {
-			return false, nil
-		}
-
-		named, ok := pointerType.Elem().(*types.Named)
-		if !ok {
-			return false, nil
-		}
-
-		for i := 0; i < named.NumMethods(); i++ {
-			if named.Method(i).Name() != methodName {
-				continue
-			}
-
-			fset := pass.Fset
-			position := fset.Position(named.Method(i).Pos())
-			file, err := parser.ParseFile(fset, position.Filename, nil, 0)
-			if err != nil {
-				return false, fmt.Errorf("parse file: %w", err)
-			}
-
-			for _, decl := range file.Decls {
-				if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-					if funcDecl.Name.Name == methodName {
-						result = safeFunc(funcDecl)
-					}
-				}
-			}
-		}
+		return safeSelectorExpr(fun, pass, safeFunc)
 	case *ast.FuncLit:
-		result = safeFunc(fun)
+		return safeFunc(fun, pass)
 	case *ast.Ident:
 		if fun.Obj == nil {
 			return false, nil
@@ -102,38 +70,115 @@ func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) (bool, error) {
 			return false, nil
 		}
 
-		result = safeFunc(funcDecl)
+		return safeFunc(funcDecl, pass)
 	}
 
-	return result, nil
+	return false, fmt.Errorf("unexpected goroutine function type: %v", reflect.TypeOf(fn.Fun).String())
 }
 
-func safeFunc(node ast.Node) bool {
+func safeFunc(node ast.Node, pass *analysis.Pass) (bool, error) {
 	result := false
+	var err error
 	ast.Inspect(node, func(node ast.Node) bool {
 		deferStmt, ok := node.(*ast.DeferStmt)
 		if !ok {
 			return true
 		}
 
-		ast.Inspect(deferStmt.Call, func(node ast.Node) bool {
-			callExpr, ok := node.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
+		ok, err = hasRecover(deferStmt.Call, pass)
+		if err != nil {
+			return false
+		}
 
-			if isRecover(callExpr) || isCustomRecover(callExpr) {
-				result = true
-				return false
-			}
-
-			return true
-		})
+		if ok {
+			result = true
+			return false
+		}
 
 		return !result
 	})
 
-	return result
+	return result, err
+}
+
+func hasRecover(expr ast.Node, pass *analysis.Pass) (bool, error) {
+	var result bool
+	var err error
+	ast.Inspect(expr, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.CallExpr:
+			if isRecover(n) || isCustomRecover(n) {
+				result = true
+				return false
+			}
+		case *ast.SelectorExpr:
+			if n.Sel == nil {
+				return true
+			}
+
+			var ok bool
+			ok, err = safeSelectorExpr(n, pass, hasRecover)
+			if err != nil {
+				return false
+			}
+
+			if ok {
+				result = true
+				return false
+			}
+		}
+		return true
+	})
+
+	return result, err
+}
+
+func safeSelectorExpr(
+	expr *ast.SelectorExpr,
+	pass *analysis.Pass,
+	methodChecker func(node ast.Node, pass *analysis.Pass) (bool, error),
+) (bool, error) {
+	ident, ok := expr.X.(*ast.Ident)
+	if !ok {
+		return false, nil
+	}
+
+	methodName := expr.Sel.Name
+	objType := pass.TypesInfo.ObjectOf(ident)
+	pointerType, ok := objType.Type().(*types.Pointer)
+	if !ok {
+		return false, nil
+	}
+
+	named, ok := pointerType.Elem().(*types.Named)
+	if !ok {
+		return false, nil
+	}
+
+	result := false
+	for i := 0; i < named.NumMethods(); i++ {
+		if named.Method(i).Name() != methodName {
+			continue
+		}
+
+		fset := pass.Fset
+		position := fset.Position(named.Method(i).Pos())
+		file, err := parser.ParseFile(fset, position.Filename, nil, 0)
+		if err != nil {
+			return false, fmt.Errorf("parse file: %w", err)
+		}
+
+		for _, decl := range file.Decls {
+			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+				if funcDecl.Name.Name == methodName {
+					result, err = methodChecker(funcDecl, pass)
+					break
+				}
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func isRecover(callExpr *ast.CallExpr) bool {
