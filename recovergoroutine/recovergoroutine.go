@@ -1,6 +1,7 @@
 package recovergoroutine
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/types"
@@ -28,6 +29,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				runErr = err
 				return false
 			}
+
 			if ok {
 				return true
 			}
@@ -53,19 +55,19 @@ func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) (bool, error) {
 	case *ast.SelectorExpr:
 		ident, ok := fun.X.(*ast.Ident)
 		if !ok {
-			return true, nil
+			return false, nil
 		}
 
 		methodName := fun.Sel.Name
 		objType := pass.TypesInfo.ObjectOf(ident)
 		pointerType, ok := objType.Type().(*types.Pointer)
 		if !ok {
-			return true, nil
+			return false, nil
 		}
 
 		named, ok := pointerType.Elem().(*types.Named)
 		if !ok {
-			return true, nil
+			return false, nil
 		}
 
 		for i := 0; i < named.NumMethods(); i++ {
@@ -77,7 +79,7 @@ func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) (bool, error) {
 			position := fset.Position(named.Method(i).Pos())
 			file, err := parser.ParseFile(fset, position.Filename, nil, 0)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("parse file: %w", err)
 			}
 
 			for _, decl := range file.Decls {
@@ -92,12 +94,12 @@ func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) (bool, error) {
 		result = safeFunc(fun)
 	case *ast.Ident:
 		if fun.Obj == nil {
-			return true, nil
+			return false, nil
 		}
 
 		funcDecl, ok := fun.Obj.Decl.(*ast.FuncDecl)
 		if !ok {
-			return true, nil
+			return false, nil
 		}
 
 		result = safeFunc(funcDecl)
@@ -120,12 +122,7 @@ func safeFunc(node ast.Node) bool {
 				return true
 			}
 
-			if isRecover(callExpr) {
-				result = true
-				return false
-			}
-
-			if isCustomRecover(callExpr) {
+			if isRecover(callExpr) || isCustomRecover(callExpr) {
 				result = true
 				return false
 			}
@@ -150,16 +147,15 @@ func isRecover(callExpr *ast.CallExpr) bool {
 
 func isCustomRecover(callExpr *ast.CallExpr) bool {
 	result := false
-	if selectorExpr, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
-		if selectorExpr.Sel == nil {
-			return true
+	switch fun := callExpr.Fun.(type) {
+	case *ast.SelectorExpr:
+		if fun.Sel == nil {
+			return result
 		}
 
-		result = checkIdent(selectorExpr.Sel)
-	}
-
-	if ident, ok := callExpr.Fun.(*ast.Ident); ok {
-		result = checkIdent(ident)
+		result = checkIdent(fun.Sel)
+	case *ast.Ident:
+		result = checkIdent(fun)
 	}
 
 	return result
@@ -168,12 +164,12 @@ func isCustomRecover(callExpr *ast.CallExpr) bool {
 func checkIdent(ident *ast.Ident) bool {
 	result := false
 	if ident.Obj == nil {
-		return true
+		return result
 	}
 
 	funcDecl, ok := ident.Obj.Decl.(*ast.FuncDecl)
 	if !ok {
-		return true
+		return result
 	}
 
 	ast.Inspect(funcDecl, func(node ast.Node) bool {
