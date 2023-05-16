@@ -34,6 +34,11 @@ func whenIdent() {
 	go nestedFunc1()
 }
 
+func whenCallMethod() {
+	async := &Async{}
+	go async.run()
+}
+
 func runGoroutine() {
 	defer func() {
 		recover()
@@ -52,4 +57,12 @@ func nestedFunc2() {}
 
 func customRecover() {
 	recover()
+}
+
+type Async struct{}
+
+func (a *Async) run() {
+	defer func() {
+		recover()
+	}()
 }
