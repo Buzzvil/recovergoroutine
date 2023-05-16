@@ -1,6 +1,7 @@
 package recovergoroutine
 
 import (
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -10,12 +11,23 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+var customRecover string
+
 func NewAnalyzer() *analysis.Analyzer {
 	analyzer := &analysis.Analyzer{
 		Name: "recovergoroutine",
 		Doc:  "finds goroutine code without recover",
 		Run:  run,
 	}
+
+	analyzer.Flags.Init("recovergoroutine", flag.ExitOnError)
+	analyzer.Flags.StringVar(
+		&customRecover,
+		"recover",
+		"",
+		"It is difficult to determine if a CustomRecover function declared in another package is valid,"+
+			" so this option can be used to resolve it.",
+	)
 
 	return analyzer
 }
@@ -122,7 +134,7 @@ func hasRecover(expr ast.Node, pass *analysis.Pass) (bool, error) {
 				return false
 			}
 
-			if ok {
+			if ok || n.Sel.Name == customRecover {
 				result = true
 				return false
 			}

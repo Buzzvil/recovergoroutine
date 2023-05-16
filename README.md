@@ -12,7 +12,12 @@ go install github.com/Buzzvil/recovergoroutine
 
 ## Usage
 ```bash
-recovergoroutine ./...
+recovergoroutine -recover="" ./...
+
+# -recover string
+#         Custom recover method name. Currently, it is difficult to determine
+#         if a CustomRecover function declared in another package is valid,
+#         so this option can be used to resolve it.
 ```
 
 Check out the test cases for validation [examples](./test/src/faildata/failcode.go).
