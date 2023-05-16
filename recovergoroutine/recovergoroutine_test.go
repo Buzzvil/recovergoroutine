@@ -25,7 +25,7 @@ func TestLint(t *testing.T) {
 		results := analysistest.Run(
 			&CustomTesting{t: t},
 			testDataDir(),
-			recovergoroutine.Analyzer,
+			recovergoroutine.NewAnalyzer(),
 			"succdata",
 		)
 		for _, result := range results {
@@ -38,11 +38,11 @@ func TestLint(t *testing.T) {
 		results := analysistest.Run(
 			&CustomTesting{t: t},
 			testDataDir(),
-			recovergoroutine.Analyzer,
+			recovergoroutine.NewAnalyzer(),
 			"faildata",
 		)
 		for _, result := range results {
-			assert.Len(t, result.Diagnostics, 7)
+			assert.Len(t, result.Diagnostics, 8)
 			assert.NoError(t, result.Err)
 		}
 	})

@@ -27,6 +27,7 @@ func whenASTFuncLit() {
 	go func() {
 		defer customRecover()
 	}()
+
 }
 
 func whenIdent() {
@@ -35,8 +36,11 @@ func whenIdent() {
 }
 
 func whenCallMethod() {
-	async := &Async{}
-	go async.run()
+	foo := &Foo{}
+	go foo.run()
+	go func() {
+		defer foo.Recover()
+	}()
 }
 
 func runGoroutine() {
@@ -59,10 +63,14 @@ func customRecover() {
 	recover()
 }
 
-type Async struct{}
+type Foo struct{}
 
-func (a *Async) run() {
+func (a *Foo) run() {
 	defer func() {
 		recover()
 	}()
+}
+
+func (a *Foo) Recover() {
+	recover()
 }
