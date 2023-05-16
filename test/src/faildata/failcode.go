@@ -32,6 +32,11 @@ func whenASTIndent() {
 	go nestedFunc1()
 }
 
+func whenCallMethod() {
+	async := &Async{}
+	go async.run()
+}
+
 func runGoroutine() {}
 
 func foo(_ int) {}
@@ -45,3 +50,7 @@ func nestedFunc1() {
 func nestedFunc2() {}
 
 func customRecover() {}
+
+type Async struct{}
+
+func (a *Async) run() {}

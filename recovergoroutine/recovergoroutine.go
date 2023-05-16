@@ -2,6 +2,9 @@ package recovergoroutine
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/types"
+
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -19,7 +22,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				return true
 			}
 
-			if safeGoStmt(goStmt) {
+			if safeGoStmt(goStmt, pass) {
 				return true
 			}
 
@@ -36,9 +39,38 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-func safeGoStmt(goStmt *ast.GoStmt) bool {
+func safeGoStmt(goStmt *ast.GoStmt, pass *analysis.Pass) bool {
 	fn := goStmt.Call
 	result := false
+	if selectorExpr, ok := fn.Fun.(*ast.SelectorExpr); ok {
+		ident, ok := selectorExpr.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		methodName := selectorExpr.Sel.Name
+		objType := pass.TypesInfo.ObjectOf(ident)
+		if objType != nil {
+			if pointerType, ok := objType.Type().(*types.Pointer); ok {
+				if named, ok := pointerType.Elem().(*types.Named); ok {
+					for i := 0; i < named.NumMethods(); i++ {
+						fset := pass.Fset
+						position := fset.Position(named.Method(i).Pos())
+						file, _ := parser.ParseFile(fset, position.Filename, nil, 0)
+						for _, decl := range file.Decls {
+							if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+								if funcDecl.Name.Name == methodName {
+									result = safeFunc(funcDecl)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+	}
+
 	if funcLit, ok := fn.Fun.(*ast.FuncLit); ok {
 		result = safeFunc(funcLit)
 	}

@@ -2,13 +2,14 @@ package recovergoroutine_test
 
 import (
 	"fmt"
-	"github.com/Buzzvil/recovergoroutine/recovergoroutine"
 	"path/filepath"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	"github.com/Buzzvil/recovergoroutine/recovergoroutine"
 )
 
 type CustomTesting struct {
@@ -41,7 +42,7 @@ func TestLint(t *testing.T) {
 			"faildata",
 		)
 		for _, result := range results {
-			assert.Len(t, result.Diagnostics, 6)
+			assert.Len(t, result.Diagnostics, 7)
 			assert.NoError(t, result.Err)
 		}
 	})
