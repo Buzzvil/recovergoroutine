@@ -15,9 +15,9 @@ go install github.com/Buzzvil/recovergoroutine
 recovergoroutine -recover="" ./...
 
 # -recover string
-#         Custom recover method name. Currently, it is difficult to determine
-#         if a CustomRecover function declared in another package is valid,
-#         so this option can be used to resolve it.
+#         Custom recovery method name. You can use this option
+#         when you want to call a method defined in a struct or
+#         use CustomRecover declared in an external package.
 ```
 
 Check out the test cases for validation [examples](./test/src/faildata/failcode.go).
