@@ -1,9 +1,15 @@
 # Recovergoroutine
 
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/4meepo/tagalign?style=flat-square)
-
 ## Summary
 When operating a Go server, we typically use recover middleware. However, if using goroutines, a failure to handle a panic in a goroutine can result in server downtime. To address this, we can use recovergoroutine and check it through linting.
+
+## Supported Go Versions
+
+### 0.2.0 and Below
+- Compatible with Go 1.19 and earlier versions.
+
+### 0.3.0 and Above
+- Requires Go 1.20 and later versions.
 
 ## Install
 ```bash
