@@ -49,7 +49,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				Message:  string(msg),
 			})
 
-			return false
+			return true
 		})
 	}
 
@@ -69,9 +69,12 @@ func safeGoStmt(goStmt *ast.GoStmt) (bool, message) {
 	return false, "use function literals when using goroutines"
 }
 
-func safeFunc(node ast.Node) bool {
+func safeFunc(node *ast.FuncLit) bool {
 	result := false
-	ast.Inspect(node, func(node ast.Node) bool {
+	ast.Inspect(node.Body, func(node ast.Node) bool {
+		if _, ok := node.(*ast.FuncLit); ok {
+			return false
+		}
 		deferStmt, ok := node.(*ast.DeferStmt)
 		if !ok {
 			return true
@@ -90,6 +93,10 @@ func safeFunc(node ast.Node) bool {
 }
 
 func hasRecover(expr ast.Node) bool {
+	call := expr.(*ast.CallExpr)
+	if id, ok := call.Fun.(*ast.Ident); ok && id.Name == "recover" {
+		return false
+	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
 		switch n := node.(type) {
