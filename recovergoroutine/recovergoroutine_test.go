@@ -1,7 +1,6 @@
 package recovergoroutine_test
 
 import (
-	"fmt"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -17,7 +16,7 @@ type CustomTesting struct {
 }
 
 func (c *CustomTesting) Errorf(format string, args ...any) {
-	c.t.Log(fmt.Sprintf(format, args...))
+	c.t.Errorf(format, args...)
 }
 
 func TestLint(t *testing.T) {
