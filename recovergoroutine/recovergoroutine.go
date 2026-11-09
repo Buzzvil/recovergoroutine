@@ -133,7 +133,7 @@ func (c checker) isRecover(callExpr *ast.CallExpr) bool {
 		return false
 	}
 
-	return c.pass.TypesInfo.Uses[ident] == types.Universe.Lookup("recover") || ident.Name == c.customRecover
+	return c.isBuiltinRecover(callExpr) || ident.Name == c.customRecover
 }
 
 func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
@@ -173,4 +173,9 @@ func (c checker) checkIdent(ident *ast.Ident) bool {
 	})
 
 	return result
+}
+
+func (c checker) isBuiltinRecover(call *ast.CallExpr) bool {
+	id, ok := call.Fun.(*ast.Ident)
+	return ok && c.pass.TypesInfo.Uses[id] == types.Universe.Lookup("recover")
 }
