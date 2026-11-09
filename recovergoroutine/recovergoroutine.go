@@ -105,15 +105,7 @@ func hasRecover(expr ast.Node) bool {
 				result = true
 				return false
 			}
-		case *ast.SelectorExpr:
-			if n.Sel == nil {
-				return true
-			}
 
-			if n.Sel.Name == customRecover {
-				result = true
-				return false
-			}
 		}
 		return true
 	})
@@ -122,6 +114,9 @@ func hasRecover(expr ast.Node) bool {
 }
 
 func isRecover(callExpr *ast.CallExpr) bool {
+	if sel, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+		return sel.Sel.Name == customRecover
+	}
 	ident, ok := callExpr.Fun.(*ast.Ident)
 	if !ok {
 		return false
