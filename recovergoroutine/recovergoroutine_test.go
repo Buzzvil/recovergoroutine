@@ -11,37 +11,27 @@ import (
 	"github.com/Buzzvil/recovergoroutine/recovergoroutine"
 )
 
-type CustomTesting struct {
-	t *testing.T
-}
-
-func (c *CustomTesting) Errorf(format string, args ...any) {
-	c.t.Errorf(format, args...)
-}
-
 func TestLint(t *testing.T) {
 	t.Run("goroutine has recover", func(t *testing.T) {
 		results := analysistest.Run(
-			&CustomTesting{t: t},
+			t,
 			testDataDir(),
 			recovergoroutine.NewAnalyzer(),
 			"succdata",
 		)
 		for _, result := range results {
-			assert.Len(t, result.Diagnostics, 0)
 			assert.NoError(t, result.Err)
 		}
 	})
 
 	t.Run("goroutine has recover with fail data", func(t *testing.T) {
 		results := analysistest.Run(
-			&CustomTesting{t: t},
+			t,
 			testDataDir(),
 			recovergoroutine.NewAnalyzer(),
 			"faildata",
 		)
 		for _, result := range results {
-			assert.Len(t, result.Diagnostics, 8)
 			assert.NoError(t, result.Err)
 		}
 	})
