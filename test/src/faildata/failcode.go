@@ -65,3 +65,9 @@ func nestedHandlers() {
 		go func() { defer func() { recover() }() }()
 	}()
 }
+
+func nestedMissing() {
+	go func() { // want "recover"
+		go func() {}() // want "recover"
+	}()
+}

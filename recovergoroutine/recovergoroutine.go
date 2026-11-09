@@ -49,7 +49,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				Message:  string(msg),
 			})
 
-			return false
+			return true
 		})
 	}
 
