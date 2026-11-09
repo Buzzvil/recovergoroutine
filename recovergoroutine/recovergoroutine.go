@@ -12,9 +12,8 @@ type checker struct {
 	customRecover string
 }
 
-var c checker
-
 func NewAnalyzer() *analysis.Analyzer {
+	c := checker{}
 	analyzer := &analysis.Analyzer{
 		Name: "recovergoroutine",
 		Doc:  "finds goroutine code without recover",
