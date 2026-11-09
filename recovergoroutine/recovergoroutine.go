@@ -84,7 +84,7 @@ func safeFunc(node *ast.FuncLit) bool {
 			return true
 		}
 
-		ok = hasRecover(deferStmt.Call)
+		ok = c.hasRecover(deferStmt.Call)
 		if ok {
 			result = true
 			return false
@@ -96,7 +96,7 @@ func safeFunc(node *ast.FuncLit) bool {
 	return result
 }
 
-func hasRecover(expr ast.Node) bool {
+func (c checker) hasRecover(expr ast.Node) bool {
 	call := expr.(*ast.CallExpr)
 	if id, ok := call.Fun.(*ast.Ident); ok && id.Name == "recover" {
 		return false
