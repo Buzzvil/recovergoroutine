@@ -97,6 +97,11 @@ func hasRecover(expr ast.Node) bool {
 	if id, ok := call.Fun.(*ast.Ident); ok && id.Name == "recover" {
 		return false
 	}
+	if f, ok := call.Fun.(*ast.FuncLit); ok {
+		expr = f.Body
+	} else {
+		return isRecover(call) || isCustomRecover(call)
+	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
 		switch n := node.(type) {
@@ -105,15 +110,7 @@ func hasRecover(expr ast.Node) bool {
 				result = true
 				return false
 			}
-		case *ast.SelectorExpr:
-			if n.Sel == nil {
-				return true
-			}
 
-			if n.Sel.Name == customRecover {
-				result = true
-				return false
-			}
 		}
 		return true
 	})
@@ -122,6 +119,9 @@ func hasRecover(expr ast.Node) bool {
 }
 
 func isRecover(callExpr *ast.CallExpr) bool {
+	if sel, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
+		return sel.Sel.Name == customRecover
+	}
 	ident, ok := callExpr.Fun.(*ast.Ident)
 	if !ok {
 		return false

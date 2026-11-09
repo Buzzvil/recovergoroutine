@@ -75,3 +75,9 @@ func nestedMissing() {
 func bareRecover() {
 	go func() { defer recover() }() // want "recover"
 }
+
+func argumentRecover() {
+	go func() { defer consume(recover()) }() // want "recover"
+}
+
+func consume(any) {}
