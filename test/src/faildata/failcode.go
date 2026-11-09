@@ -81,3 +81,8 @@ func argumentRecover() {
 }
 
 func consume(any) {}
+
+func shadowedRecover() {
+	recover := func() {}
+	go func() { defer func() { recover() }() }() // want "recover"
+}

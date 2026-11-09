@@ -3,6 +3,7 @@ package recovergoroutine
 import (
 	"flag"
 	"go/ast"
+	"go/types"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -10,6 +11,7 @@ type message string
 
 type checker struct {
 	customRecover string
+	pass          *analysis.Pass
 }
 
 func NewAnalyzer() *analysis.Analyzer {
@@ -32,6 +34,7 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func (c checker) run(pass *analysis.Pass) (interface{}, error) {
+	c.pass = pass
 	var runErr error
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -130,7 +133,7 @@ func (c checker) isRecover(callExpr *ast.CallExpr) bool {
 		return false
 	}
 
-	return ident.Name == "recover" || ident.Name == c.customRecover
+	return c.pass.TypesInfo.Uses[ident] == types.Universe.Lookup("recover") || ident.Name == c.customRecover
 }
 
 func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
