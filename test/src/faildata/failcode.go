@@ -95,3 +95,8 @@ func indirectRecover() {
 		defer func() { func() { recover() }() }()
 	}()
 }
+
+func deferredNested() { defer recover() }
+func namedIndirect() {
+	go func() { defer deferredNested() }() // want "recover"
+}

@@ -167,7 +167,11 @@ func (c checker) checkIdent(ident *ast.Ident) bool {
 	}
 
 	ast.Inspect(funcDecl, func(node ast.Node) bool {
-		if callExpr, ok := node.(*ast.CallExpr); ok && c.isRecover(callExpr) {
+		switch node.(type) {
+		case *ast.FuncLit, *ast.GoStmt, *ast.DeferStmt:
+			return false
+		}
+		if callExpr, ok := node.(*ast.CallExpr); ok && c.isBuiltinRecover(callExpr) {
 			result = true
 			return false
 		}
