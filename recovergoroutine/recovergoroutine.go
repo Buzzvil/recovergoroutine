@@ -142,15 +142,15 @@ func isCustomRecover(callExpr *ast.CallExpr) bool {
 			return result
 		}
 
-		result = checkIdent(fun.Sel)
+		result = c.checkIdent(fun.Sel)
 	case *ast.Ident:
-		result = checkIdent(fun)
+		result = c.checkIdent(fun)
 	}
 
 	return result
 }
 
-func checkIdent(ident *ast.Ident) bool {
+func (c checker) checkIdent(ident *ast.Ident) bool {
 	result := false
 	if ident.Obj == nil {
 		return result
