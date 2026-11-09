@@ -5,15 +5,18 @@ When operating a Go server, we typically use recover middleware. However, if usi
 
 ## Supported Go Versions
 
-### 0.2.0 and Below
-- Compatible with Go 1.19 and earlier versions.
+| Release | Minimum Go |
+| --- | --- |
+| v0.3.0 | 1.19 |
+| v0.4.0 | 1.25 |
+| v0.5.0 / main | 1.27.1 |
 
-### 0.3.0 and Above
-- Requires Go 1.20 and later versions.
+`-recover`는 신뢰하는 복구 함수 이름입니다. 함수 구현은 검증하지 않습니다.
+조건부·늦은 defer 등록의 모든 실행 경로를 검증하지는 않습니다.
 
 ## Install
 ```bash
-go install github.com/Buzzvil/recovergoroutine
+go install github.com/Buzzvil/recovergoroutine@latest
 ```
 
 ## Usage
