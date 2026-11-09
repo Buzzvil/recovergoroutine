@@ -104,13 +104,13 @@ func hasRecover(expr ast.Node) bool {
 	if f, ok := call.Fun.(*ast.FuncLit); ok {
 		expr = f.Body
 	} else {
-		return c.isRecover(call) || isCustomRecover(call)
+		return c.isRecover(call) || c.isCustomRecover(call)
 	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
 		switch n := node.(type) {
 		case *ast.CallExpr:
-			if c.isRecover(n) || isCustomRecover(n) {
+			if c.isRecover(n) || c.isCustomRecover(n) {
 				result = true
 				return false
 			}
@@ -134,7 +134,7 @@ func (c checker) isRecover(callExpr *ast.CallExpr) bool {
 	return ident.Name == "recover" || ident.Name == c.customRecover
 }
 
-func isCustomRecover(callExpr *ast.CallExpr) bool {
+func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
 	result := false
 	switch fun := callExpr.Fun.(type) {
 	case *ast.SelectorExpr:
