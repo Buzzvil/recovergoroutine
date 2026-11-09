@@ -81,3 +81,28 @@ func argumentRecover() {
 }
 
 func consume(any) {}
+
+func shadowedRecover() {
+	recover := func() {}
+	go func() { defer func() { recover() }() }() // want "recover"
+}
+
+func indirectRecover() {
+	go func() { // want "recover"
+		defer func() { nestedFunc1() }()
+	}()
+	go func() { // want "recover"
+		defer func() { func() { recover() }() }()
+	}()
+}
+
+func deferredNested() { defer recover() }
+func namedIndirect() {
+	go func() { defer deferredNested() }() // want "recover"
+}
+
+func delayedAgain() {
+	go func() { // want "recover"
+		defer func() { defer recover() }()
+	}()
+}

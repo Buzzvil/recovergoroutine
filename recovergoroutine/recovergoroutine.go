@@ -3,6 +3,7 @@ package recovergoroutine
 import (
 	"flag"
 	"go/ast"
+	"go/types"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -10,6 +11,7 @@ type message string
 
 type checker struct {
 	customRecover string
+	pass          *analysis.Pass
 }
 
 func NewAnalyzer() *analysis.Analyzer {
@@ -32,6 +34,7 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func (c checker) run(pass *analysis.Pass) (interface{}, error) {
+	c.pass = pass
 	var runErr error
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -107,9 +110,13 @@ func (c checker) hasRecover(expr ast.Node) bool {
 	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
+		switch node.(type) {
+		case *ast.FuncLit, *ast.GoStmt, *ast.DeferStmt:
+			return false
+		}
 		switch n := node.(type) {
 		case *ast.CallExpr:
-			if c.isRecover(n) || c.isCustomRecover(n) {
+			if c.isBuiltinRecover(n) {
 				result = true
 				return false
 			}
@@ -130,7 +137,7 @@ func (c checker) isRecover(callExpr *ast.CallExpr) bool {
 		return false
 	}
 
-	return ident.Name == "recover" || ident.Name == c.customRecover
+	return c.isBuiltinRecover(callExpr) || ident.Name == c.customRecover
 }
 
 func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
@@ -161,7 +168,11 @@ func (c checker) checkIdent(ident *ast.Ident) bool {
 	}
 
 	ast.Inspect(funcDecl, func(node ast.Node) bool {
-		if callExpr, ok := node.(*ast.CallExpr); ok && c.isRecover(callExpr) {
+		switch node.(type) {
+		case *ast.FuncLit, *ast.GoStmt, *ast.DeferStmt:
+			return false
+		}
+		if callExpr, ok := node.(*ast.CallExpr); ok && c.isBuiltinRecover(callExpr) {
 			result = true
 			return false
 		}
@@ -170,4 +181,9 @@ func (c checker) checkIdent(ident *ast.Ident) bool {
 	})
 
 	return result
+}
+
+func (c checker) isBuiltinRecover(call *ast.CallExpr) bool {
+	id, ok := call.Fun.(*ast.Ident)
+	return ok && c.pass.TypesInfo.Uses[id] == types.Universe.Lookup("recover")
 }
