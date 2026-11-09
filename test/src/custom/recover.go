@@ -10,3 +10,9 @@ func run() {
 type handler struct{}
 
 func (handler) Recover() {}
+
+func argumentHandler() {
+	go func() { defer consume(alias.Recover) }() // want "recover"
+}
+
+func consume(any) {}
