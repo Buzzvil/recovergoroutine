@@ -8,18 +8,22 @@ import (
 
 type message string
 
-var customRecover string
+type checker struct {
+	customRecover string
+}
+
+var c checker
 
 func NewAnalyzer() *analysis.Analyzer {
 	analyzer := &analysis.Analyzer{
 		Name: "recovergoroutine",
 		Doc:  "finds goroutine code without recover",
-		Run:  run,
+		Run:  c.run,
 	}
 
 	analyzer.Flags.Init("recovergoroutine", flag.ExitOnError)
 	analyzer.Flags.StringVar(
-		&customRecover,
+		&c.customRecover,
 		"recover",
 		"",
 		"You can use this option when you want to call a method defined in a struct or use CustomRecover declared in an external package.",
@@ -28,7 +32,7 @@ func NewAnalyzer() *analysis.Analyzer {
 	return analyzer
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func (c checker) run(pass *analysis.Pass) (interface{}, error) {
 	var runErr error
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -120,14 +124,14 @@ func hasRecover(expr ast.Node) bool {
 
 func isRecover(callExpr *ast.CallExpr) bool {
 	if sel, ok := callExpr.Fun.(*ast.SelectorExpr); ok {
-		return sel.Sel.Name == customRecover
+		return sel.Sel.Name == c.customRecover
 	}
 	ident, ok := callExpr.Fun.(*ast.Ident)
 	if !ok {
 		return false
 	}
 
-	return ident.Name == "recover" || ident.Name == customRecover
+	return ident.Name == "recover" || ident.Name == c.customRecover
 }
 
 func isCustomRecover(callExpr *ast.CallExpr) bool {
