@@ -52,3 +52,10 @@ func TestCustomRecover(t *testing.T) {
 	}
 	analysistest.Run(t, testDataDir(), a, "custom")
 }
+
+func TestIndependentOptions(t *testing.T) {
+	a := recovergoroutine.NewAnalyzer()
+	assert.NoError(t, a.Flags.Set("recover", "Recover"))
+	recovergoroutine.NewAnalyzer()
+	assert.Equal(t, "Recover", a.Flags.Lookup("recover").Value.String())
+}
