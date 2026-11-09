@@ -110,7 +110,8 @@ func (c checker) hasRecover(expr ast.Node) bool {
 	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
-		if _, ok := node.(*ast.FuncLit); ok {
+		switch node.(type) {
+		case *ast.FuncLit, *ast.GoStmt, *ast.DeferStmt:
 			return false
 		}
 		switch n := node.(type) {
