@@ -44,3 +44,11 @@ func testDataDir() string {
 	}
 	return filepath.Join(filepath.Dir(testFilename), "..", "test")
 }
+
+func TestCustomRecover(t *testing.T) {
+	a := recovergoroutine.NewAnalyzer()
+	if err := a.Flags.Set("recover", "Recover"); err != nil {
+		t.Fatal(err)
+	}
+	analysistest.Run(t, testDataDir(), a, "custom")
+}

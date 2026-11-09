@@ -24,3 +24,5 @@ func whenASTFuncLit() {
 }
 
 func handlePanic() { recover() }
+
+func Recover() { recover() }
