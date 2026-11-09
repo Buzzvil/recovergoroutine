@@ -167,11 +167,7 @@ func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
 
 func (c checker) checkIdent(ident *ast.Ident) bool {
 	result := false
-	if ident.Obj == nil {
-		return result
-	}
-
-	funcDecl, ok := ident.Obj.Decl.(*ast.FuncDecl)
+	funcDecl, ok := c.funcs[c.pass.TypesInfo.Uses[ident]]
 	if !ok {
 		return result
 	}
