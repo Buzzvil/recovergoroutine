@@ -93,6 +93,10 @@ func safeFunc(node *ast.FuncLit) bool {
 }
 
 func hasRecover(expr ast.Node) bool {
+	call := expr.(*ast.CallExpr)
+	if id, ok := call.Fun.(*ast.Ident); ok && id.Name == "recover" {
+		return false
+	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
 		switch n := node.(type) {
