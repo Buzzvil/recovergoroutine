@@ -64,7 +64,7 @@ func safeGoStmt(goStmt *ast.GoStmt) (bool, message) {
 	fn := goStmt.Call
 	switch fun := fn.Fun.(type) {
 	case *ast.FuncLit:
-		if !safeFunc(fun) {
+		if !c.safeFunc(fun) {
 			return false, "goroutine must have recover"
 		}
 		return true, ""
@@ -73,7 +73,7 @@ func safeGoStmt(goStmt *ast.GoStmt) (bool, message) {
 	return false, "use function literals when using goroutines"
 }
 
-func safeFunc(node *ast.FuncLit) bool {
+func (c checker) safeFunc(node *ast.FuncLit) bool {
 	result := false
 	ast.Inspect(node.Body, func(node ast.Node) bool {
 		if _, ok := node.(*ast.FuncLit); ok {
