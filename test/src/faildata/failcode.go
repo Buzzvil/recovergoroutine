@@ -100,3 +100,9 @@ func deferredNested() { defer recover() }
 func namedIndirect() {
 	go func() { defer deferredNested() }() // want "recover"
 }
+
+func delayedAgain() {
+	go func() { // want "recover"
+		defer func() { defer recover() }()
+	}()
+}
