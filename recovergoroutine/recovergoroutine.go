@@ -18,7 +18,7 @@ func NewAnalyzer() *analysis.Analyzer {
 	analyzer := &analysis.Analyzer{
 		Name: "recovergoroutine",
 		Doc:  "finds goroutine code without recover",
-		Run:  c.run,
+		Run:  func(pass *analysis.Pass) (interface{}, error) { return c.run(pass) },
 	}
 
 	analyzer.Flags.Init("recovergoroutine", flag.ExitOnError)
@@ -41,7 +41,7 @@ func (c checker) run(pass *analysis.Pass) (interface{}, error) {
 				return true
 			}
 
-			ok, msg := safeGoStmt(goStmt)
+			ok, msg := c.safeGoStmt(goStmt)
 			if ok {
 				return true
 			}
@@ -60,7 +60,7 @@ func (c checker) run(pass *analysis.Pass) (interface{}, error) {
 	return nil, runErr
 }
 
-func safeGoStmt(goStmt *ast.GoStmt) (bool, message) {
+func (c checker) safeGoStmt(goStmt *ast.GoStmt) (bool, message) {
 	fn := goStmt.Call
 	switch fun := fn.Fun.(type) {
 	case *ast.FuncLit:
