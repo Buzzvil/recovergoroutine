@@ -110,9 +110,12 @@ func (c checker) hasRecover(expr ast.Node) bool {
 	}
 	var result bool
 	ast.Inspect(expr, func(node ast.Node) bool {
+		if _, ok := node.(*ast.FuncLit); ok {
+			return false
+		}
 		switch n := node.(type) {
 		case *ast.CallExpr:
-			if c.isRecover(n) || c.isCustomRecover(n) {
+			if c.isBuiltinRecover(n) {
 				result = true
 				return false
 			}

@@ -86,3 +86,12 @@ func shadowedRecover() {
 	recover := func() {}
 	go func() { defer func() { recover() }() }() // want "recover"
 }
+
+func indirectRecover() {
+	go func() { // want "recover"
+		defer func() { nestedFunc1() }()
+	}()
+	go func() { // want "recover"
+		defer func() { func() { recover() }() }()
+	}()
+}
