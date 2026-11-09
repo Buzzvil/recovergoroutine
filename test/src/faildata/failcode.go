@@ -29,13 +29,13 @@ func whenASTFuncLit() {
 
 func whenASTIndent() {
 	go runGoroutine() // want "function literals"
-	go nestedFunc1() // want "function literals"
+	go nestedFunc1()  // want "function literals"
 }
 
 func whenCallMethod() {
 	foo := &Foo{}
 	go foo.run() // want "function literals"
-	go func() { // want "recover"
+	go func() {  // want "recover"
 		defer foo.Recover()
 	}()
 }
@@ -59,3 +59,9 @@ type Foo struct{}
 func (a *Foo) run() {}
 
 func (a *Foo) Recover() {}
+
+func nestedHandlers() {
+	go func() { // want "recover"
+		go func() { defer func() { recover() }() }()
+	}()
+}
