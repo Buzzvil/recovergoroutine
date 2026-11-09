@@ -10,6 +10,7 @@ import (
 type message string
 
 type checker struct {
+	funcs         map[types.Object]*ast.FuncDecl
 	customRecover string
 	pass          *analysis.Pass
 }
@@ -35,6 +36,14 @@ func NewAnalyzer() *analysis.Analyzer {
 
 func (c checker) run(pass *analysis.Pass) (interface{}, error) {
 	c.pass = pass
+	c.funcs = make(map[types.Object]*ast.FuncDecl)
+	for _, f := range pass.Files {
+		for _, d := range f.Decls {
+			if fn, ok := d.(*ast.FuncDecl); ok {
+				c.funcs[pass.TypesInfo.Defs[fn.Name]] = fn
+			}
+		}
+	}
 	var runErr error
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -158,11 +167,7 @@ func (c checker) isCustomRecover(callExpr *ast.CallExpr) bool {
 
 func (c checker) checkIdent(ident *ast.Ident) bool {
 	result := false
-	if ident.Obj == nil {
-		return result
-	}
-
-	funcDecl, ok := ident.Obj.Decl.(*ast.FuncDecl)
+	funcDecl, ok := c.funcs[c.pass.TypesInfo.Uses[ident]]
 	if !ok {
 		return result
 	}
