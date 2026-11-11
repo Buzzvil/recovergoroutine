@@ -13,6 +13,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+// main uses syntax loading for ordinary lint runs and delegates driver-specific options to singlechecker.
 func main() {
 	a := recovergoroutine.NewAnalyzer()
 	flags := flag.NewFlagSet(a.Name, flag.ContinueOnError)
@@ -30,6 +31,8 @@ func main() {
 	singlechecker.Main(recovergoroutine.NewAnalyzer())
 }
 
+// lintSyntax returns the lint exit code and whether it handled the invocation.
+// On a loading or analysis error, singlechecker takes over to report the failure.
 func lintSyntax(a *analysis.Analyzer, patterns []string, tests bool) (int, bool) {
 	pkgs, err := packages.Load(&packages.Config{
 		Mode:  packages.LoadFiles | packages.NeedSyntax | packages.NeedImports,

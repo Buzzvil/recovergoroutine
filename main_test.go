@@ -10,6 +10,7 @@ import (
 	"testing"
 )
 
+// TestCLI runs the built binary so diagnostics and exit codes are checked as a CI caller sees them.
 func TestCLI(t *testing.T) {
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "recovergoroutine")
@@ -63,6 +64,18 @@ func f() {
 		out := run(t, true, 3, "-recover=Recover", "./...")
 		if !strings.Contains(out, "-export=false") || strings.Contains(out, "-export=true") {
 			t.Fatalf("expected package loading without dependency export data:\n%s", out)
+		}
+	})
+	t.Run("type error without lint diagnostics", func(t *testing.T) {
+		fixture := filepath.Join(dir, "testdata")
+		if err := os.Mkdir(fixture, 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(fixture, "broken.go"), []byte("package broken\nvar _ int = false\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		if out := run(t, false, 0, "./testdata"); out != "" {
+			t.Fatalf("expected no diagnostics, got %q", out)
 		}
 	})
 	t.Run("text diagnostics", func(t *testing.T) {

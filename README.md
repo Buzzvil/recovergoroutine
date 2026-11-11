@@ -26,7 +26,10 @@ recovergoroutine -recover="" ./...
 #         use CustomRecover declared in an external package.
 ```
 
-기본 CLI는 Go 빌드 조건에 맞는 소스와 테스트 파일의 구문을 검사합니다. 타입 오류는 `go build` 또는 `go test`에서 확인하세요.
+By default, the CLI checks the syntax of source and test files selected by Go's build rules.
+In v0.5.0, a package with only a type error caused the CLI to exit with code `1`.
+The default command can now exit with code `0` for that package when it finds no goroutine violations.
+Run `go test ./...` in CI to catch type errors in both source and test files. `go build ./...` checks only non-test files.
 
 Check out the test cases for validation [examples](./test/src/faildata/failcode.go).
 ```bash
