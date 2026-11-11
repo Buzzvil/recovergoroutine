@@ -26,6 +26,8 @@ recovergoroutine -recover="" ./...
 #         use CustomRecover declared in an external package.
 ```
 
+기본 CLI는 Go 빌드 조건에 맞는 소스와 테스트 파일의 구문을 검사합니다. 타입 오류는 `go build` 또는 `go test`에서 확인하세요.
+
 Check out the test cases for validation [examples](./test/src/faildata/failcode.go).
 ```bash
 # Output:
