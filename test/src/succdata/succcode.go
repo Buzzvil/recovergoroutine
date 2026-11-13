@@ -2,7 +2,7 @@ package succdata
 
 func whenASTFuncLit() {
 	go func() {
-		defer recover()
+		defer func() { recover() }()
 	}()
 
 	go func() {
@@ -19,12 +19,8 @@ func whenASTFuncLit() {
 	}()
 
 	go func() {
-		rec := func() {
-			defer func() {
-				recover()
-			}()
-		}
-
-		defer rec()
+		defer handlePanic()
 	}()
 }
+
+func handlePanic() { recover() }

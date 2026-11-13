@@ -1,13 +1,13 @@
 package faildata
 
 func whenASTFuncLit() {
-	go func() {
+	go func() { // want "recover"
 		defer func() {
 			// recover comment
 		}()
 	}()
 
-	go func() {
+	go func() { // want "recover"
 		// recover variable
 		var recover = 1
 		foo(recover)
@@ -17,25 +17,25 @@ func whenASTFuncLit() {
 		// not checked
 	}()
 
-	go func() {
+	go func() { // want "recover"
 		// not used defer
 		recover()
 	}()
 
-	go func() {
+	go func() { // want "recover"
 		defer customRecover()
 	}()
 }
 
 func whenASTIndent() {
-	go runGoroutine()
-	go nestedFunc1()
+	go runGoroutine() // want "function literals"
+	go nestedFunc1() // want "function literals"
 }
 
 func whenCallMethod() {
 	foo := &Foo{}
-	go foo.run()
-	go func() {
+	go foo.run() // want "function literals"
+	go func() { // want "recover"
 		defer foo.Recover()
 	}()
 }
